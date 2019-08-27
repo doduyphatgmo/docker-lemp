@@ -1,0 +1,67 @@
+version : '3'
+services: 
+  nginx:
+    image: nginx:latest
+    ports: 
+        - "80:80"
+        - "81:81"
+    links:
+        - php7.1
+    volumes:
+        - ./insights:/usr/share/nginx/html/insights
+        - ./raw-data-system:/usr/share/nginx/html/raw-data-system
+        - ./nginx/default:/etc/nginx/conf.d
+        - ./logs/nginx-error.log:/var/log/nginx/error.log
+        - ./logs/nginx-access.log:/var/log/nginx/access.log
+  php7.1:
+    build: ./php7.1
+    ports:
+        - "9000:9000"
+    links:
+        - mongodb    
+    volumes:
+        - ./insights:/usr/share/nginx/html/insights
+        - ./raw-data-system:/usr/share/nginx/html/raw-data-system
+  mysql:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+    ports:
+      - 3307:3306
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - 27017:27017
+    volumes:
+      - ./dataVolume:/data/db
+      - ./mongo-config:/data/configdb
+      - ./api_wecheer_dev1:/home/dumpData/api_wecheer_dev
+      - ./dump:/home/dump
+      - ./etc/mongod.conf:/etc/mongod.conf
+    # command: ["mongod", "--config", "/etc/mongod.conf"]    
+  # nodejs_install:
+  #     image: node:latest
+  #     working_dir: /home/node/app
+  #     volumes:
+  #       - ./wecheer-io-api:/home/node/app
+  #     command: "npm install"
+  nodejs:
+      image: node:latest
+      working_dir: /home/node/app
+      volumes:
+        - ./wecheer-io-api:/home/node/app
+      ports:
+        - 3031:3031
+      links: 
+        - mongodb
+      command: "npm start"
+
+
